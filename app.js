@@ -155,6 +155,44 @@ function sanitizeArticleHtml(value = "") {
   return template.innerHTML;
 }
 
+function createReaderSlides(value = "") {
+  const template = document.createElement("template");
+  template.innerHTML = sanitizeArticleHtml(value);
+  const blocks = [...template.content.children].filter((node) => stripHtml(node.outerHTML).length || node.querySelector?.("img"));
+  const usableBlocks = blocks.length ? blocks : [document.createElement("p")];
+
+  if (!blocks.length) {
+    usableBlocks[0].textContent = "A materia completa ainda nao esta disponivel no app.";
+  }
+
+  const slides = [];
+  let current = [];
+  let currentLength = 0;
+
+  usableBlocks.forEach((block) => {
+    const blockLength = stripHtml(block.outerHTML).length;
+    const shouldBreak = current.length && currentLength + blockLength > 760;
+
+    if (shouldBreak) {
+      slides.push(current.join(""));
+      current = [];
+      currentLength = 0;
+    }
+
+    current.push(block.outerHTML);
+    currentLength += blockLength;
+  });
+
+  if (current.length) slides.push(current.join(""));
+
+  return slides.map((slide, index) => `
+    <section class="reader-slide">
+      <div class="reader-slide-counter">${index + 1} / ${slides.length}</div>
+      ${slide}
+    </section>
+  `).join("");
+}
+
 function applyImageFallback(img) {
   img.addEventListener("error", () => {
     if (img.src !== DEFAULT_IMAGE) {
@@ -497,9 +535,15 @@ function renderStory() {
           <p class="story-meta">${meta}</p>
           <h3>${title}</h3>
           <div class="story-actions">
-            <button class="story-action-button story-like-action" type="button" aria-pressed="${liked}" data-post-id="${postId}">${liked ? "Curtido" : "Curtir"}</button>
-            <button class="story-action-button story-share-action" type="button" data-post-id="${postId}">Compartilhar</button>
-            <button class="story-action-button story-read-action" type="button" data-post-id="${postId}">Ler</button>
+            <button class="story-action-button story-like-action" type="button" aria-pressed="${liked}" data-post-id="${postId}" aria-label="${liked ? "Descurtir" : "Curtir"}">
+              <span aria-hidden="true">${liked ? "♥" : "♡"}</span>
+            </button>
+            <button class="story-action-button story-share-action" type="button" data-post-id="${postId}" aria-label="Compartilhar">
+              <span aria-hidden="true">↗</span>
+            </button>
+            <button class="story-action-button story-read-action" type="button" data-post-id="${postId}" aria-label="Ler materia">
+              <span aria-hidden="true">≡</span>
+            </button>
           </div>
           <p class="story-feedback" role="status" aria-live="polite"></p>
         </div>
@@ -567,7 +611,8 @@ function toggleStoryLike(postId) {
   persistLikes();
   els.storyTrack.querySelectorAll(`.story-like-action[data-post-id="${normalizedPostId}"]`).forEach((button) => {
     const liked = state.likedPosts.has(normalizedPostId);
-    button.textContent = liked ? "Curtido" : "Curtir";
+    button.innerHTML = `<span aria-hidden="true">${liked ? "♥" : "♡"}</span>`;
+    button.setAttribute("aria-label", liked ? "Descurtir" : "Curtir");
     button.setAttribute("aria-pressed", String(liked));
   });
 }
@@ -594,7 +639,7 @@ async function shareStory(postId, feedbackElement) {
 
 function readCurrentStory(postId) {
   const post = findPostById(postId);
-  if (post) selectPost(post.id);
+  if (post) selectPost(post.id, { slideMode: true });
 }
 
 function renderList() {
@@ -647,7 +692,32 @@ function renderList() {
   updateLoadMoreButtons();
 }
 
-function selectPost(id) {
+function destroyReaderSlider() {
+  if (window.jQuery?.(els.readerBody).hasClass("slick-initialized")) {
+    window.jQuery(els.readerBody).slick("unslick");
+  }
+  els.readerBody.classList.remove("reader-body-slider");
+}
+
+function syncReaderSlider() {
+  if (!window.jQuery || !window.jQuery.fn?.slick) return;
+
+  const $reader = window.jQuery(els.readerBody);
+  if ($reader.hasClass("slick-initialized")) return;
+
+  $reader.slick({
+    adaptiveHeight: true,
+    arrows: false,
+    dots: true,
+    infinite: false,
+    mobileFirst: true,
+    speed: 220,
+    swipe: true,
+    touchThreshold: 12
+  });
+}
+
+function selectPost(id, options = {}) {
   const post = state.posts.find((item) => String(item.id) === String(id));
   if (!post) return;
 
@@ -664,9 +734,12 @@ function selectPost(id) {
   els.readerMeta.textContent = `${getCategoryName(post)} | ${formatDate(post.date)}`;
   els.readerTitle.textContent = stripHtml(post.title?.rendered);
   els.readerExcerpt.textContent = stripHtml(post.excerpt?.rendered) || "A materia completa esta disponivel no site do Jornal Opiniao.";
-  els.readerBody.innerHTML = sanitizeArticleHtml(post.content?.rendered);
+  destroyReaderSlider();
+  els.readerBody.innerHTML = options.slideMode ? createReaderSlides(post.content?.rendered) : sanitizeArticleHtml(post.content?.rendered);
+  els.readerBody.classList.toggle("reader-body-slider", Boolean(options.slideMode));
   els.readerBody.querySelectorAll("img").forEach(applyImageFallback);
   els.readerLink.href = post.link || SITE_URL;
+  if (options.slideMode) syncReaderSlider();
   els.readerPanel?.scrollTo({ top: 0, behavior: "smooth" });
 }
 
