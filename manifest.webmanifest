@@ -1,0 +1,16 @@
+{
+  "name": "Jornal Opiniao",
+  "short_name": "Opiniao",
+  "description": "Noticias do Jornal Opiniao e canal de denuncia do leitor.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f6f9",
+  "theme_color": "#0a4579",
+  "icons": [
+    {
+      "src": "https://jornalopiniao.net/wp-content/uploads/2019/02/Logo_Oficial_Opiniao_01-1.png",
+      "sizes": "150x62",
+      "type": "image/png"
+    }
+  ]
+}
