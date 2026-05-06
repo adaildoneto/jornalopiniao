@@ -67,17 +67,8 @@ const els = {
   heroTitle: document.querySelector("#heroTitle"),
   heroExcerpt: document.querySelector("#heroExcerpt"),
   heroReadButton: document.querySelector("#heroReadButton"),
-  storyBg: document.querySelector("#storyBg"),
+  storyTrack: document.querySelector("#storyTrack"),
   storyProgress: document.querySelector("#storyProgress"),
-  storyPrevZone: document.querySelector("#storyPrevZone"),
-  storyNextZone: document.querySelector("#storyNextZone"),
-  storyMeta: document.querySelector("#storyMeta"),
-  storyTitle: document.querySelector("#storyTitle"),
-  storyExcerpt: document.querySelector("#storyExcerpt"),
-  storyLikeButton: document.querySelector("#storyLikeButton"),
-  storyShareButton: document.querySelector("#storyShareButton"),
-  storyReadButton: document.querySelector("#storyReadButton"),
-  storyFeedback: document.querySelector("#storyFeedback"),
   coverLeadGrid: document.querySelector("#coverLeadGrid"),
   coverLatestGrid: document.querySelector("#coverLatestGrid"),
   coverLoadMoreButton: document.querySelector("#coverLoadMoreButton"),
@@ -105,6 +96,15 @@ function stripHtml(value = "") {
   const div = document.createElement("div");
   div.innerHTML = value;
   return div.textContent.replace(/\s+/g, " ").trim();
+}
+
+function escapeHtml(value = "") {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function normalizeImageUrl(url = "") {
@@ -234,6 +234,7 @@ function setView(view) {
   });
   if (view === "stories") {
     renderStory();
+    syncStorySlider();
     ensureMinimumPosts();
   }
 }
@@ -456,76 +457,123 @@ function persistLikes() {
 
 function renderStory() {
   const posts = getStoryPosts();
-  const post = getCurrentStory();
+  const visiblePosts = posts.slice(0, 20);
+  const wasInitialized = window.jQuery?.(els.storyTrack).hasClass("slick-initialized");
 
-  if (!post) {
-    els.storyTitle.textContent = "Nenhuma materia disponivel";
-    els.storyExcerpt.textContent = "Atualize o feed para carregar os stories.";
-    els.storyMeta.textContent = "Stories";
-    els.storyBg.style.backgroundImage = `url("${DEFAULT_IMAGE}")`;
+  if (wasInitialized) {
+    window.jQuery(els.storyTrack).slick("unslick");
+  }
+
+  els.storyTrack.innerHTML = "";
+
+  if (!visiblePosts.length) {
     els.storyProgress.innerHTML = "";
+    els.storyTrack.innerHTML = `
+      <article class="story-slide">
+        <div class="story-bg" style="background-image: url('${DEFAULT_IMAGE}')"></div>
+        <div class="story-shade"></div>
+        <div class="story-content">
+          <p class="story-meta">Stories</p>
+          <h3>Nenhuma materia disponivel</h3>
+          <p class="story-feedback">Atualize o feed para carregar os stories.</p>
+        </div>
+      </article>
+    `;
     return;
   }
 
-  const postId = String(post.id);
-  const liked = state.likedPosts.has(postId);
-  const progress = posts.slice(0, Math.min(posts.length, 12)).map((_, index) => {
+  els.storyTrack.innerHTML = visiblePosts.map((post, index) => {
+    const postId = String(post.id);
+    const liked = state.likedPosts.has(postId);
+    const title = escapeHtml(stripHtml(post.title?.rendered));
+    const meta = escapeHtml(`${getCategoryName(post)} | ${formatDate(post.date)} | ${index + 1} de ${visiblePosts.length}`);
+    const image = escapeHtml(getImage(post).replace(/'/g, "%27"));
+
+    return `
+      <article class="story-slide" data-post-id="${postId}">
+        <div class="story-bg" style="background-image: url('${image}')"></div>
+        <div class="story-shade"></div>
+        <div class="story-content">
+          <p class="story-meta">${meta}</p>
+          <h3>${title}</h3>
+          <div class="story-actions">
+            <button class="story-action-button story-like-action" type="button" aria-pressed="${liked}" data-post-id="${postId}">${liked ? "Curtido" : "Curtir"}</button>
+            <button class="story-action-button story-share-action" type="button" data-post-id="${postId}">Compartilhar</button>
+            <button class="story-action-button story-read-action" type="button" data-post-id="${postId}">Ler</button>
+          </div>
+          <p class="story-feedback" role="status" aria-live="polite"></p>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  renderStoryProgress(visiblePosts.length);
+  if (document.querySelector('[data-view-panel="stories"]').classList.contains("active")) {
+    syncStorySlider();
+  }
+}
+
+function renderStoryProgress(total) {
+  els.storyProgress.innerHTML = Array.from({ length: total }, (_, index) => {
     const active = index === state.storyIndex ? " active" : "";
     const seen = index < state.storyIndex ? " seen" : "";
     return `<span class="story-progress-item${active}${seen}"></span>`;
   }).join("");
-
-  els.storyBg.style.backgroundImage = `url("${getImage(post)}")`;
-  els.storyMeta.textContent = `${getCategoryName(post)} | ${formatDate(post.date)} | ${state.storyIndex + 1} de ${posts.length}`;
-  els.storyTitle.textContent = stripHtml(post.title?.rendered);
-  els.storyExcerpt.textContent = stripHtml(post.excerpt?.rendered) || "Toque em Ler para abrir a materia completa.";
-  els.storyLikeButton.textContent = liked ? "Curtido" : "Curtir";
-  els.storyLikeButton.setAttribute("aria-pressed", String(liked));
-  els.storyFeedback.textContent = "";
-  els.storyProgress.innerHTML = progress;
 }
 
-async function nextStory() {
-  const posts = getStoryPosts();
-  if (!posts.length) return;
+function syncStorySlider() {
+  if (!window.jQuery || !window.jQuery.fn?.slick || !els.storyTrack.children.length) return;
 
-  if (state.storyIndex < posts.length - 1) {
-    state.storyIndex += 1;
-    renderStory();
-    return;
-  }
+  const $track = window.jQuery(els.storyTrack);
+  if ($track.hasClass("slick-initialized")) return;
 
-  if (state.hasMore) {
-    await loadMorePosts();
-    state.storyIndex = Math.min(state.storyIndex + 1, getStoryPosts().length - 1);
-    renderStory();
-  }
+  $track.off("afterChange.jornalOpiniao");
+  $track.on("afterChange.jornalOpiniao", async (_event, _slick, currentSlide) => {
+    state.storyIndex = currentSlide;
+    renderStoryProgress(getStoryPosts().slice(0, 20).length);
+
+    if (currentSlide >= getStoryPosts().slice(0, 20).length - 2 && state.hasMore) {
+      await loadMorePosts();
+    }
+  });
+
+  $track.slick({
+    arrows: false,
+    dots: false,
+    infinite: false,
+    initialSlide: Math.min(state.storyIndex, Math.max(els.storyTrack.children.length - 1, 0)),
+    mobileFirst: true,
+    speed: 220,
+    swipe: true,
+    touchThreshold: 12
+  });
 }
 
-function previousStory() {
-  if (state.storyIndex > 0) {
-    state.storyIndex -= 1;
-    renderStory();
-  }
+function findPostById(id) {
+  return state.posts.find((post) => String(post.id) === String(id));
 }
 
-function toggleStoryLike() {
-  const post = getCurrentStory();
+function toggleStoryLike(postId) {
+  const post = findPostById(postId);
   if (!post) return;
 
-  const postId = String(post.id);
-  if (state.likedPosts.has(postId)) {
-    state.likedPosts.delete(postId);
+  const normalizedPostId = String(post.id);
+  if (state.likedPosts.has(normalizedPostId)) {
+    state.likedPosts.delete(normalizedPostId);
   } else {
-    state.likedPosts.add(postId);
+    state.likedPosts.add(normalizedPostId);
   }
 
   persistLikes();
-  renderStory();
+  els.storyTrack.querySelectorAll(`.story-like-action[data-post-id="${normalizedPostId}"]`).forEach((button) => {
+    const liked = state.likedPosts.has(normalizedPostId);
+    button.textContent = liked ? "Curtido" : "Curtir";
+    button.setAttribute("aria-pressed", String(liked));
+  });
 }
 
-async function shareStory() {
-  const post = getCurrentStory();
+async function shareStory(postId, feedbackElement) {
+  const post = findPostById(postId);
   if (!post) return;
 
   const title = stripHtml(post.title?.rendered);
@@ -538,14 +586,14 @@ async function shareStory() {
     }
 
     await navigator.clipboard.writeText(url);
-    els.storyFeedback.textContent = "Link copiado para compartilhar.";
+    feedbackElement.textContent = "Link copiado para compartilhar.";
   } catch {
-    els.storyFeedback.textContent = "Nao foi possivel compartilhar agora.";
+    feedbackElement.textContent = "Nao foi possivel compartilhar agora.";
   }
 }
 
-function readCurrentStory() {
-  const post = getCurrentStory();
+function readCurrentStory(postId) {
+  const post = findPostById(postId);
   if (post) selectPost(post.id);
 }
 
@@ -696,11 +744,15 @@ function bindEvents() {
   });
   els.coverLoadMoreButton.addEventListener("click", loadMorePosts);
   els.feedLoadMoreButton.addEventListener("click", loadMorePosts);
-  els.storyPrevZone.addEventListener("click", previousStory);
-  els.storyNextZone.addEventListener("click", nextStory);
-  els.storyLikeButton.addEventListener("click", toggleStoryLike);
-  els.storyShareButton.addEventListener("click", shareStory);
-  els.storyReadButton.addEventListener("click", readCurrentStory);
+  els.storyTrack.addEventListener("click", (event) => {
+    const action = event.target.closest(".story-action-button");
+    if (!action) return;
+
+    const postId = action.dataset.postId;
+    if (action.classList.contains("story-like-action")) toggleStoryLike(postId);
+    if (action.classList.contains("story-share-action")) shareStory(postId, action.closest(".story-content").querySelector(".story-feedback"));
+    if (action.classList.contains("story-read-action")) readCurrentStory(postId);
+  });
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;
     if (id) selectPost(id);

@@ -7,6 +7,7 @@
     <meta name="description" content="App do Jornal Opiniao para leitura de noticias e envio de denuncias do leitor.">
     <title>Jornal Opini&atilde;o App</title>
     <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./vendor/slick.css">
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -99,8 +100,6 @@
         <section class="app-view" id="view-stories" data-view-panel="stories" aria-labelledby="storiesTitle">
           <div class="stories-shell">
             <div class="story-card" id="storyCard">
-              <div class="story-bg" id="storyBg"></div>
-              <div class="story-shade"></div>
               <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
 
               <div class="story-topbar">
@@ -111,20 +110,7 @@
                 <button class="story-icon-button app-view-trigger" type="button" data-view="capa" aria-label="Fechar stories">x</button>
               </div>
 
-              <button class="story-zone story-prev-zone" id="storyPrevZone" type="button" aria-label="Story anterior"></button>
-              <button class="story-zone story-next-zone" id="storyNextZone" type="button" aria-label="Proximo story"></button>
-
-              <article class="story-content">
-                <p class="story-meta" id="storyMeta">Carregando</p>
-                <h3 id="storyTitle">Carregando mat&eacute;rias...</h3>
-                <p id="storyExcerpt">As principais not&iacute;cias em formato r&aacute;pido.</p>
-                <div class="story-actions">
-                  <button class="story-action-button" id="storyLikeButton" type="button" aria-pressed="false">Curtir</button>
-                  <button class="story-action-button" id="storyShareButton" type="button">Compartilhar</button>
-                  <button class="story-action-button" id="storyReadButton" type="button">Ler</button>
-                </div>
-                <p class="story-feedback" id="storyFeedback" role="status" aria-live="polite"></p>
-              </article>
+              <div class="story-track" id="storyTrack" aria-live="polite"></div>
             </div>
           </div>
         </section>
@@ -243,6 +229,8 @@
       </main>
     </div>
 
+    <script src="./vendor/jquery.min.js"></script>
+    <script src="./vendor/slick.min.js"></script>
     <script src="./app.js" defer></script>
   </body>
 </html>

@@ -396,6 +396,20 @@ button {
   box-shadow: var(--shadow);
 }
 
+.story-track,
+.story-track .slick-list,
+.story-track .slick-track,
+.story-track .slick-slide,
+.story-track .slick-slide > div {
+  height: 100%;
+}
+
+.story-slide {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
 .story-bg,
 .story-shade {
   position: absolute;
@@ -464,25 +478,6 @@ button {
   color: #fff;
   background: rgba(0, 0, 0, 0.22);
   font-weight: 800;
-}
-
-.story-zone {
-  position: absolute;
-  z-index: 2;
-  top: 88px;
-  bottom: 156px;
-  border: 0;
-  background: transparent;
-}
-
-.story-prev-zone {
-  left: 0;
-  width: 34%;
-}
-
-.story-next-zone {
-  right: 0;
-  width: 66%;
 }
 
 .story-content {
