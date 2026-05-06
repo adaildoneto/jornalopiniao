@@ -32,3 +32,7 @@ https://jornalopiniao.net/wp-json/wp/v2/posts?per_page=18&_embed=1
 ```
 
 Se a API estiver indisponivel, o app mostra uma chamada de fallback com orientacao para atualizar ou acessar o site oficial.
+
+## Licenca
+
+Este projeto usa a licenca descrita em `LICENSE`.
