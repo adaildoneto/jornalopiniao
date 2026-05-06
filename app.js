@@ -30,10 +30,16 @@ const els = {
   clockLabel: document.querySelector("#clockLabel"),
   todayLabel: document.querySelector("#todayLabel"),
   refreshButton: document.querySelector("#refreshButton"),
+  appTabs: document.querySelectorAll(".app-tab"),
+  appViewTriggers: document.querySelectorAll(".app-view-trigger"),
+  appViews: document.querySelectorAll(".app-view"),
   heroMedia: document.querySelector("#heroMedia"),
   heroTitle: document.querySelector("#heroTitle"),
   heroExcerpt: document.querySelector("#heroExcerpt"),
   heroReadButton: document.querySelector("#heroReadButton"),
+  coverLeadGrid: document.querySelector("#coverLeadGrid"),
+  coverLatestGrid: document.querySelector("#coverLatestGrid"),
+  popularList: document.querySelector("#popularList"),
   newsList: document.querySelector("#newsList"),
   statusLine: document.querySelector("#statusLine"),
   searchInput: document.querySelector("#searchInput"),
@@ -142,6 +148,15 @@ function setStatus(message) {
   els.statusLine.textContent = message;
 }
 
+function setView(view) {
+  els.appViews.forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.viewPanel === view);
+  });
+  els.appTabs.forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.view === view);
+  });
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -179,6 +194,7 @@ async function loadPosts() {
   }
   applyFilters();
   renderHero(state.filteredPosts[0] || state.posts[0]);
+  renderCover();
 }
 
 function applyFilters() {
@@ -197,6 +213,68 @@ function renderHero(post) {
   els.heroExcerpt.textContent = stripHtml(post.excerpt?.rendered) || "Leia a materia completa no Jornal Opiniao.";
   els.heroReadButton.dataset.id = post.id;
   els.heroMedia.style.backgroundImage = `linear-gradient(0deg, rgba(0,0,0,.88), rgba(0,0,0,.32) 56%, rgba(0,0,0,.08)), url("${getImage(post)}")`;
+}
+
+function createCoverCard(post, variant = "compact") {
+  const button = document.createElement("button");
+  button.className = `cover-card ${variant}`;
+  button.type = "button";
+
+  const img = document.createElement("img");
+  img.src = getImage(post);
+  img.alt = "";
+  img.loading = "lazy";
+  applyImageFallback(img);
+
+  const content = document.createElement("span");
+  content.className = "cover-card-copy";
+
+  const meta = document.createElement("span");
+  meta.className = "news-meta";
+  meta.textContent = `${getCategoryName(post)} | ${formatDate(post.date)}`;
+
+  const title = document.createElement("strong");
+  title.textContent = stripHtml(post.title?.rendered);
+
+  content.append(meta, title);
+  button.append(img, content);
+  button.addEventListener("click", () => selectPost(post.id));
+
+  return button;
+}
+
+function renderCover() {
+  const posts = state.filteredPosts.length ? state.filteredPosts : state.posts;
+  els.coverLeadGrid.innerHTML = "";
+  els.coverLatestGrid.innerHTML = "";
+  els.popularList.innerHTML = "";
+
+  posts.slice(1, 5).forEach((post, index) => {
+    els.coverLeadGrid.append(createCoverCard(post, index === 0 ? "wide" : "compact"));
+  });
+
+  posts.slice(5, 11).forEach((post) => {
+    const button = document.createElement("button");
+    button.className = "headline-link";
+    button.type = "button";
+    const category = document.createElement("span");
+    category.textContent = getCategoryName(post);
+    const title = document.createElement("strong");
+    title.textContent = stripHtml(post.title?.rendered);
+    button.append(category, title);
+    button.addEventListener("click", () => selectPost(post.id));
+    els.coverLatestGrid.append(button);
+  });
+
+  posts.slice(0, 5).forEach((post) => {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = stripHtml(post.title?.rendered);
+    button.addEventListener("click", () => selectPost(post.id));
+    item.append(button);
+    els.popularList.append(item);
+  });
 }
 
 function renderList() {
@@ -254,6 +332,7 @@ function selectPost(id) {
   state.selectedId = post.id;
   renderList();
   renderHero(post);
+  setView("leitura");
 
   els.readerEmpty.classList.add("hidden");
   els.readerArticle.classList.remove("hidden");
@@ -266,7 +345,7 @@ function selectPost(id) {
   els.readerBody.innerHTML = sanitizeArticleHtml(post.content?.rendered);
   els.readerBody.querySelectorAll("img").forEach(applyImageFallback);
   els.readerLink.href = post.link || SITE_URL;
-  els.readerPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  els.readerPanel?.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function updateClock() {
@@ -329,6 +408,12 @@ function sendWhatsapp() {
 
 function bindEvents() {
   els.refreshButton.addEventListener("click", loadPosts);
+  els.appTabs.forEach((tab) => {
+    tab.addEventListener("click", () => setView(tab.dataset.view));
+  });
+  els.appViewTriggers.forEach((trigger) => {
+    trigger.addEventListener("click", () => setView(trigger.dataset.view));
+  });
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;
     if (id) selectPost(id);
@@ -342,6 +427,7 @@ function bindEvents() {
       els.navChips.forEach((item) => item.classList.remove("active"));
       chip.classList.add("active");
       state.activeCategoryId = chip.dataset.category || "";
+      setView("capa");
       loadPosts();
     });
   });

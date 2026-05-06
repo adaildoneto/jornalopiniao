@@ -18,131 +18,169 @@
         </div>
 
         <div class="brand-row">
-          <a class="brand" href="#home" aria-label="Ir para o inicio">
+          <button class="brand app-view-trigger" type="button" data-view="capa" aria-label="Ir para a capa">
             <img src="https://jornalopiniao.net/wp-content/uploads/2019/02/Logo_Oficial_Opiniao_01-1.png" alt="Jornal Opiniao">
-          </a>
+          </button>
           <button class="icon-button" id="refreshButton" type="button" title="Atualizar noticias" aria-label="Atualizar noticias">
             <span aria-hidden="true">&#8635;</span>
           </button>
         </div>
 
-        <nav class="section-nav" aria-label="Editorias">
-          <button class="nav-chip active" type="button" data-category="">Capa</button>
-          <button class="nav-chip" type="button" data-slug="politica">Pol&iacute;tica</button>
-          <button class="nav-chip" type="button" data-slug="acre">Acre</button>
-          <button class="nav-chip" type="button" data-slug="rio-branco">Rio Branco</button>
-          <button class="nav-chip" type="button" data-slug="brasil">Brasil</button>
-          <button class="nav-chip" type="button" data-slug="esporte">Esporte</button>
-          <button class="nav-chip" type="button" data-slug="cultura">Cultura</button>
+        <nav class="app-nav" aria-label="Areas do app">
+          <button class="app-tab active" type="button" data-view="capa">Capa</button>
+          <button class="app-tab" type="button" data-view="leitura">Leitura</button>
+          <button class="app-tab" type="button" data-view="denuncia">Den&uacute;ncia</button>
         </nav>
       </header>
 
-      <main class="main" id="home">
-        <section class="hero-news" aria-labelledby="heroTitle">
-          <div class="hero-media" id="heroMedia"></div>
-          <div class="hero-copy">
-            <p class="kicker">Jornal Opini&atilde;o</p>
-            <h1 id="heroTitle">As principais not&iacute;cias do Acre no seu bolso</h1>
-            <p id="heroExcerpt">Carregando a edi&ccedil;&atilde;o mais recente...</p>
-            <div class="hero-actions">
-              <button class="primary-action" id="heroReadButton" type="button">Ler no app</button>
-              <a class="secondary-action" href="#denuncia">Enviar den&uacute;ncia</a>
-            </div>
-          </div>
-        </section>
+      <main class="main">
+        <section class="app-view active" id="view-capa" data-view-panel="capa" aria-labelledby="coverTitle">
+          <div class="cover-layout">
+            <section class="hero-news" aria-labelledby="coverTitle">
+              <div class="hero-media" id="heroMedia"></div>
+              <div class="hero-copy">
+                <p class="kicker">Capa</p>
+                <h1 id="coverTitle">Jornal Opini&atilde;o</h1>
+                <h2 id="heroTitle">As principais not&iacute;cias do Acre no seu bolso</h2>
+                <p id="heroExcerpt">Carregando a edi&ccedil;&atilde;o mais recente...</p>
+                <div class="hero-actions">
+                  <button class="primary-action" id="heroReadButton" type="button">Ler no app</button>
+                  <button class="secondary-action app-view-trigger" type="button" data-view="denuncia">Enviar den&uacute;ncia</button>
+                </div>
+              </div>
+            </section>
 
-        <section class="workspace" aria-label="Noticias e denuncia">
-          <div class="feed-panel">
-            <div class="feed-toolbar">
-              <div>
+            <aside class="cover-rail" aria-label="Servicos e destaques">
+              <section class="weather-box">
+                <p class="eyebrow">Rio Branco</p>
+                <strong>26&deg;</strong>
+                <span>Tempo local</span>
+              </section>
+              <section class="most-read">
+                <p class="eyebrow">Mais lidas</p>
+                <ol id="popularList"></ol>
+              </section>
+            </aside>
+          </div>
+
+          <nav class="section-nav" aria-label="Editorias">
+            <button class="nav-chip active" type="button" data-category="">Capa</button>
+            <button class="nav-chip" type="button" data-slug="politica">Pol&iacute;tica</button>
+            <button class="nav-chip" type="button" data-slug="acre">Acre</button>
+            <button class="nav-chip" type="button" data-slug="rio-branco">Rio Branco</button>
+            <button class="nav-chip" type="button" data-slug="brasil">Brasil</button>
+            <button class="nav-chip" type="button" data-slug="esporte">Esporte</button>
+            <button class="nav-chip" type="button" data-slug="cultura">Cultura</button>
+          </nav>
+
+          <section class="cover-grid" aria-label="Destaques da capa">
+            <div class="cover-leads" id="coverLeadGrid"></div>
+            <div class="cover-latest">
+              <div class="section-title">
                 <p class="eyebrow">Atualiza&ccedil;&atilde;o ao vivo</p>
                 <h2>&Uacute;ltimas not&iacute;cias</h2>
               </div>
-              <label class="search-box">
-                <span>Buscar</span>
-                <input id="searchInput" type="search" placeholder="Digite uma palavra-chave">
-              </label>
+              <div id="coverLatestGrid" class="headline-stack"></div>
             </div>
-            <div class="status-line" id="statusLine">Conectando ao WordPress...</div>
-            <div class="news-list" id="newsList" aria-live="polite"></div>
-          </div>
-
-          <aside class="reader-panel" id="readerPanel" aria-label="Materia selecionada">
-            <div class="reader-empty" id="readerEmpty">
-              <p class="eyebrow">Leitura</p>
-              <h2>Selecione uma mat&eacute;ria</h2>
-              <p>Toque em uma not&iacute;cia para ler a mat&eacute;ria completa sem sair do app.</p>
-            </div>
-            <article class="reader-article hidden" id="readerArticle">
-              <img id="readerImage" alt="">
-              <p class="eyebrow" id="readerMeta"></p>
-              <h2 id="readerTitle"></h2>
-              <p class="reader-standfirst" id="readerExcerpt"></p>
-              <div class="reader-body" id="readerBody"></div>
-              <div class="reader-actions">
-                <a class="secondary-action" id="readerLink" href="#" target="_blank" rel="noopener">Abrir no site</a>
-                <a class="primary-action" href="#denuncia">Enviar den&uacute;ncia</a>
-              </div>
-            </article>
-          </aside>
+          </section>
         </section>
 
-        <section class="report-section" id="denuncia" aria-labelledby="reportTitle">
-          <div class="report-copy">
-            <p class="eyebrow">Canal do leitor</p>
-            <h2 id="reportTitle">Envie sua den&uacute;ncia para a reda&ccedil;&atilde;o</h2>
-            <p>Relate problemas, irregularidades ou situa&ccedil;&otilde;es urgentes com clareza. O app organiza as informa&ccedil;&otilde;es antes do envio para facilitar a apura&ccedil;&atilde;o.</p>
-            <div class="trust-list" aria-label="Compromissos do canal">
-              <span>Identidade preservada</span>
-              <span>Campos objetivos</span>
-              <span>Envio por e-mail ou WhatsApp</span>
-            </div>
+        <section class="app-view" id="view-leitura" data-view-panel="leitura" aria-labelledby="readingTitle">
+          <div class="reading-shell">
+            <aside class="feed-panel" aria-label="Lista de materias">
+              <div class="feed-toolbar">
+                <div>
+                  <p class="eyebrow">Leitura</p>
+                  <h2 id="readingTitle">Mat&eacute;rias</h2>
+                </div>
+                <label class="search-box">
+                  <span>Buscar</span>
+                  <input id="searchInput" type="search" placeholder="Digite uma palavra-chave">
+                </label>
+              </div>
+              <div class="status-line" id="statusLine">Conectando ao WordPress...</div>
+              <div class="news-list" id="newsList" aria-live="polite"></div>
+            </aside>
+
+            <section class="reader-panel" id="readerPanel" aria-label="Materia selecionada">
+              <div class="reader-empty" id="readerEmpty">
+                <p class="eyebrow">Leitor do app</p>
+                <h2>Selecione uma mat&eacute;ria</h2>
+                <p>Escolha uma not&iacute;cia na lista para abrir o texto completo neste espa&ccedil;o.</p>
+              </div>
+              <article class="reader-article hidden" id="readerArticle">
+                <img id="readerImage" alt="">
+                <p class="eyebrow" id="readerMeta"></p>
+                <h2 id="readerTitle"></h2>
+                <p class="reader-standfirst" id="readerExcerpt"></p>
+                <div class="reader-body" id="readerBody"></div>
+                <div class="reader-actions">
+                  <a class="secondary-action" id="readerLink" href="#" target="_blank" rel="noopener">Abrir no site</a>
+                  <button class="primary-action app-view-trigger" type="button" data-view="denuncia">Enviar den&uacute;ncia</button>
+                </div>
+              </article>
+            </section>
           </div>
+        </section>
 
-          <form class="report-form" id="reportForm">
-            <div class="form-grid">
-              <label>
-                Nome
-                <input id="reportName" name="name" autocomplete="name" placeholder="Opcional">
-              </label>
-              <label>
-                Contato
-                <input id="reportContact" name="contact" autocomplete="email tel" placeholder="E-mail ou telefone">
-              </label>
-              <label>
-                Local
-                <input id="reportPlace" name="place" required placeholder="Bairro, cidade ou orgao">
-              </label>
-              <label>
-                Tipo
-                <select id="reportType" name="type">
-                  <option>Denuncia</option>
-                  <option>Servico publico</option>
-                  <option>Seguranca</option>
-                  <option>Saude</option>
-                  <option>Educacao</option>
-                  <option>Outro</option>
-                </select>
-              </label>
+        <section class="app-view" id="view-denuncia" data-view-panel="denuncia" aria-labelledby="reportTitle">
+          <div class="report-section">
+            <div class="report-copy">
+              <p class="eyebrow">Canal do leitor</p>
+              <h2 id="reportTitle">Envie sua den&uacute;ncia para a reda&ccedil;&atilde;o</h2>
+              <p>Relate problemas, irregularidades ou situa&ccedil;&otilde;es urgentes com clareza. O app organiza as informa&ccedil;&otilde;es antes do envio para facilitar a apura&ccedil;&atilde;o.</p>
+              <div class="trust-list" aria-label="Compromissos do canal">
+                <span>Identidade preservada</span>
+                <span>Campos objetivos</span>
+                <span>Envio por e-mail ou WhatsApp</span>
+              </div>
             </div>
 
-            <label>
-              Relato
-              <textarea id="reportMessage" name="message" required minlength="20" rows="7" placeholder="Conte o que aconteceu, quando aconteceu e quem pode confirmar a informacao."></textarea>
-            </label>
+            <form class="report-form" id="reportForm">
+              <div class="form-grid">
+                <label>
+                  Nome
+                  <input id="reportName" name="name" autocomplete="name" placeholder="Opcional">
+                </label>
+                <label>
+                  Contato
+                  <input id="reportContact" name="contact" autocomplete="email tel" placeholder="E-mail ou telefone">
+                </label>
+                <label>
+                  Local
+                  <input id="reportPlace" name="place" required placeholder="Bairro, cidade ou orgao">
+                </label>
+                <label>
+                  Tipo
+                  <select id="reportType" name="type">
+                    <option>Denuncia</option>
+                    <option>Servico publico</option>
+                    <option>Seguranca</option>
+                    <option>Saude</option>
+                    <option>Educacao</option>
+                    <option>Outro</option>
+                  </select>
+                </label>
+              </div>
 
-            <label class="checkbox-row">
-              <input id="anonymousToggle" type="checkbox">
-              <span>Quero preservar minha identidade na apura&ccedil;&atilde;o</span>
-            </label>
+              <label>
+                Relato
+                <textarea id="reportMessage" name="message" required minlength="20" rows="8" placeholder="Conte o que aconteceu, quando aconteceu e quem pode confirmar a informacao."></textarea>
+              </label>
 
-            <div class="report-actions">
-              <button class="primary-action" type="submit">Enviar por e-mail</button>
-              <button class="secondary-action" id="whatsappButton" type="button">Enviar por WhatsApp</button>
-            </div>
-            <p class="form-feedback" id="formFeedback" role="status" aria-live="polite"></p>
-            <p class="form-note">Para receber anexos, o e-mail ou WhatsApp aberto pelo app poder&aacute; permitir adicionar fotos, v&iacute;deos e documentos antes do envio.</p>
-          </form>
+              <label class="checkbox-row">
+                <input id="anonymousToggle" type="checkbox">
+                <span>Quero preservar minha identidade na apura&ccedil;&atilde;o</span>
+              </label>
+
+              <div class="report-actions">
+                <button class="primary-action" type="submit">Enviar por e-mail</button>
+                <button class="secondary-action" id="whatsappButton" type="button">Enviar por WhatsApp</button>
+              </div>
+              <p class="form-feedback" id="formFeedback" role="status" aria-live="polite"></p>
+              <p class="form-note">Para receber anexos, o e-mail ou WhatsApp aberto pelo app poder&aacute; permitir adicionar fotos, v&iacute;deos e documentos antes do envio.</p>
+            </form>
+          </div>
         </section>
       </main>
     </div>
