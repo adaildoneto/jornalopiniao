@@ -1,0 +1,17 @@
+{
+  "name": "jornalopiniao-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node dev-server.mjs",
+    "build": "node tools/build-web.mjs",
+    "cap:sync": "npm run build && npx cap sync",
+    "android:open": "npm run build && npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0"
+  }
+}

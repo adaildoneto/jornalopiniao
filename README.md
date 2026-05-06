@@ -9,10 +9,39 @@ O feed carrega materias sob demanda pela API do WordPress. Quando uma cidade ou 
 Abra `index.html` no navegador ou sirva a pasta localmente:
 
 ```powershell
-node .\dev-server.mjs
+npm run serve
 ```
 
 Depois acesse `http://localhost:4173`.
+
+## App Android com Capacitor
+
+O projeto ja esta preparado para evoluir de web/PWA para aplicativo Android usando Capacitor.
+
+```powershell
+npm install
+npm run build
+npx cap sync android
+```
+
+Para abrir o projeto nativo no Android Studio:
+
+```powershell
+npm run android:open
+```
+
+Depois de qualquer alteracao em `index.html`, `app.js`, `styles.css`, `manifest.webmanifest` ou `sw.js`, rode `npm run build` e `npx cap sync android` para atualizar os arquivos dentro do app Android.
+
+Para gerar um APK debug pelo terminal, use Java 11 ou superior. Nesta maquina, o JDK do Android Studio funcionou:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+cd android
+.\gradlew.bat assembleDebug
+```
+
+O APK debug fica em `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 ## Configuracao do canal de denuncia
 

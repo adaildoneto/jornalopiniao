@@ -1,0 +1,8 @@
+{
+  "appId": "br.com.jornalopiniao.app",
+  "appName": "Jornal Opiniao",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
