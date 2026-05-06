@@ -1,6 +1,6 @@
 # Jornal Opiniao App
 
-App web/PWA para leitura das noticias do site `jornalopiniao.net` dentro do app e envio de denuncias do leitor para a redacao.
+App web/PWA para leitura das noticias do site `jornalopiniao.net` dentro do app e envio de denuncias do leitor para a redacao. A capa e a leitura destacam duas pracas principais: Rio Branco, capital do Acre, e Boca do Acre, no Amazonas.
 
 ## Como usar
 

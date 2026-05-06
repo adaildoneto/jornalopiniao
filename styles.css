@@ -280,8 +280,9 @@ button {
   display: block;
   color: var(--primary);
   font-family: Lato, "Segoe UI", Arial, sans-serif;
-  font-size: 42px;
+  font-size: 24px;
   line-height: 1;
+  margin-top: 12px;
 }
 
 .weather-box span,
@@ -323,6 +324,33 @@ button {
 
 .section-nav::-webkit-scrollbar {
   display: none;
+}
+
+.city-nav,
+.city-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.city-nav {
+  margin: 14px 0 0;
+}
+
+.city-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--primary);
+  background: #fff;
+  padding: 8px 13px;
+  font-weight: 800;
+}
+
+.city-chip.active {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .nav-chip {
@@ -392,6 +420,20 @@ button {
   font-family: Lato, "Segoe UI", Arial, sans-serif;
   font-size: 17px;
   line-height: 1.12;
+}
+
+.empty-cover {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 18px;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-weight: 800;
+  text-align: center;
 }
 
 .cover-latest {

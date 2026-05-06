@@ -13,7 +13,7 @@
     <div class="app-shell">
       <header class="site-header">
         <div class="topbar">
-          <span id="todayLabel">Rio Branco, AC</span>
+          <span id="todayLabel">Rio Branco, AC e Boca do Acre, AM</span>
           <span id="clockLabel">--:--</span>
         </div>
 
@@ -52,9 +52,11 @@
 
             <aside class="cover-rail" aria-label="Servicos e destaques">
               <section class="weather-box">
-                <p class="eyebrow">Rio Branco</p>
-                <strong>26&deg;</strong>
-                <span>Tempo local</span>
+                <p class="eyebrow">Pra&ccedil;as</p>
+                <strong>Rio Branco</strong>
+                <span>Capital do Acre</span>
+                <strong>Boca do Acre</strong>
+                <span>Sul do Amazonas</span>
               </section>
               <section class="most-read">
                 <p class="eyebrow">Mais lidas</p>
@@ -62,6 +64,12 @@
               </section>
             </aside>
           </div>
+
+          <nav class="city-nav" aria-label="Pracas principais">
+            <button class="city-chip active" type="button" data-city="todas">Todas</button>
+            <button class="city-chip" type="button" data-city="rio-branco">Rio Branco</button>
+            <button class="city-chip" type="button" data-city="boca-do-acre">Boca do Acre</button>
+          </nav>
 
           <nav class="section-nav" aria-label="Editorias">
             <button class="nav-chip active" type="button" data-category="">Capa</button>
@@ -92,6 +100,11 @@
                 <div>
                   <p class="eyebrow">Leitura</p>
                   <h2 id="readingTitle">Mat&eacute;rias</h2>
+                </div>
+                <div class="city-toggle" aria-label="Filtrar por cidade">
+                  <button class="city-chip active" type="button" data-city="todas">Todas</button>
+                  <button class="city-chip" type="button" data-city="rio-branco">Rio Branco</button>
+                  <button class="city-chip" type="button" data-city="boca-do-acre">Boca do Acre</button>
                 </div>
                 <label class="search-box">
                   <span>Buscar</span>
@@ -145,6 +158,14 @@
                 <label>
                   Contato
                   <input id="reportContact" name="contact" autocomplete="email tel" placeholder="E-mail ou telefone">
+                </label>
+                <label>
+                  Cidade
+                  <select id="reportCity" name="city">
+                    <option>Rio Branco</option>
+                    <option>Boca do Acre</option>
+                    <option>Outra cidade</option>
+                  </select>
                 </label>
                 <label>
                   Local

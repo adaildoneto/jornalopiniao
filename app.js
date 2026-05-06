@@ -3,6 +3,23 @@ const SITE_URL = "https://jornalopiniao.net";
 const NEWSROOM_EMAIL = "redacao@jornalopiniao.net";
 const WHATSAPP_NUMBER = "";
 const DEFAULT_IMAGE = "https://i0.wp.com/jornalopiniao.net/wp-content/uploads/2019/02/14708185_1085435801551868_8420624485574874253_n.png?fit=900%2C900&ssl=1";
+const CITY_FILTERS = {
+  todas: {
+    label: "Todas as cidades",
+    terms: [],
+    categorySlugs: []
+  },
+  "rio-branco": {
+    label: "Rio Branco",
+    terms: ["rio branco", "rio-branco", "capital do acre"],
+    categorySlugs: ["rio-branco"]
+  },
+  "boca-do-acre": {
+    label: "Boca do Acre",
+    terms: ["boca do acre", "boca-do-acre", "amazonas"],
+    categorySlugs: ["boca-do-acre"]
+  }
+};
 
 const fallbackPosts = [
   {
@@ -21,8 +38,10 @@ const state = {
   posts: [],
   filteredPosts: [],
   categories: new Map(),
+  cityCategories: new Map(),
   selectedId: null,
   activeCategoryId: "",
+  activeCity: "todas",
   searchTerm: ""
 };
 
@@ -33,6 +52,7 @@ const els = {
   appTabs: document.querySelectorAll(".app-tab"),
   appViewTriggers: document.querySelectorAll(".app-view-trigger"),
   appViews: document.querySelectorAll(".app-view"),
+  cityChips: document.querySelectorAll(".city-chip"),
   heroMedia: document.querySelector("#heroMedia"),
   heroTitle: document.querySelector("#heroTitle"),
   heroExcerpt: document.querySelector("#heroExcerpt"),
@@ -144,8 +164,40 @@ function getCategoryName(post) {
   return state.categories.get(id) || "Noticia";
 }
 
+function getPostText(post) {
+  return `${stripHtml(post.title?.rendered)} ${stripHtml(post.excerpt?.rendered)} ${stripHtml(post.content?.rendered)}`.toLowerCase();
+}
+
+function matchesCity(post) {
+  const config = CITY_FILTERS[state.activeCity] || CITY_FILTERS.todas;
+  if (!config.terms.length) return true;
+
+  const categoryIds = state.cityCategories.get(state.activeCity) || [];
+  const hasCityCategory = post.categories?.some((id) => categoryIds.includes(id));
+  if (hasCityCategory) return true;
+
+  const text = getPostText(post);
+  return config.terms.some((term) => text.includes(term));
+}
+
 function setStatus(message) {
   els.statusLine.textContent = message;
+}
+
+function updateStatusCount() {
+  const cityLabel = CITY_FILTERS[state.activeCity]?.label || "Todas as cidades";
+  setStatus(`${state.filteredPosts.length} noticias exibidas | ${cityLabel}`);
+}
+
+function setCity(city) {
+  state.activeCity = CITY_FILTERS[city] ? city : "todas";
+  els.cityChips.forEach((chip) => {
+    chip.classList.toggle("active", chip.dataset.city === state.activeCity);
+  });
+  applyFilters();
+  updateStatusCount();
+  renderHero(state.filteredPosts[0] || state.posts[0]);
+  renderCover();
 }
 
 function setView(view) {
@@ -169,6 +221,12 @@ async function loadCategories() {
   try {
     const categories = await fetchJson(`${WP_BASE}/categories?per_page=100`);
     state.categories = new Map(categories.map((category) => [category.id, category.name]));
+    state.cityCategories = new Map(Object.entries(CITY_FILTERS).map(([city, config]) => [
+      city,
+      categories
+        .filter((category) => config.categorySlugs.includes(category.slug))
+        .map((category) => category.id)
+    ]));
     els.navChips.forEach((chip) => {
       const slug = chip.dataset.slug;
       if (!slug) return;
@@ -184,9 +242,10 @@ async function loadPosts() {
   setStatus("Conectando ao WordPress...");
   try {
     const categoryParam = state.activeCategoryId ? `&categories=${state.activeCategoryId}` : "";
-    const posts = await fetchJson(`${WP_BASE}/posts?per_page=18&_embed=1${categoryParam}`);
+    const posts = await fetchJson(`${WP_BASE}/posts?per_page=50&_embed=1${categoryParam}`);
     state.posts = posts.length ? posts : fallbackPosts;
-    setStatus(`${state.posts.length} noticias carregadas de jornalopiniao.net`);
+    const cityLabel = CITY_FILTERS[state.activeCity]?.label || "Todas as cidades";
+    setStatus(`${state.posts.length} noticias carregadas de jornalopiniao.net | ${cityLabel}`);
   } catch (error) {
     console.warn("Feed indisponivel", error);
     state.posts = fallbackPosts;
@@ -200,10 +259,12 @@ async function loadPosts() {
 function applyFilters() {
   const term = state.searchTerm.toLowerCase();
   state.filteredPosts = state.posts.filter((post) => {
-    const text = `${stripHtml(post.title?.rendered)} ${stripHtml(post.excerpt?.rendered)} ${stripHtml(post.content?.rendered)}`.toLowerCase();
-    return !term || text.includes(term);
+    const text = getPostText(post);
+    const matchesSearch = !term || text.includes(term);
+    return matchesCity(post) && matchesSearch;
   });
   renderList();
+  updateStatusCount();
 }
 
 function renderHero(post) {
@@ -249,6 +310,14 @@ function renderCover() {
   els.coverLatestGrid.innerHTML = "";
   els.popularList.innerHTML = "";
 
+  if (!state.filteredPosts.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-cover";
+    empty.textContent = "Nenhuma noticia encontrada para esta cidade agora.";
+    els.coverLeadGrid.append(empty);
+    return;
+  }
+
   posts.slice(1, 5).forEach((post, index) => {
     els.coverLeadGrid.append(createCoverCard(post, index === 0 ? "wide" : "compact"));
   });
@@ -283,7 +352,7 @@ function renderList() {
   if (!state.filteredPosts.length) {
     const empty = document.createElement("div");
     empty.className = "status-line";
-    empty.textContent = "Nenhuma noticia encontrada para essa busca.";
+    empty.textContent = "Nenhuma noticia encontrada para essa cidade ou busca.";
     els.newsList.append(empty);
     return;
   }
@@ -355,17 +424,19 @@ function updateClock() {
     minute: "2-digit",
     timeZone: "America/Rio_Branco"
   }).format(now);
-  els.todayLabel.textContent = new Intl.DateTimeFormat("pt-BR", {
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
     day: "2-digit",
     month: "long",
     timeZone: "America/Rio_Branco"
   }).format(now);
+  els.todayLabel.textContent = `Rio Branco, AC e Boca do Acre, AM | ${dateLabel}`;
 }
 
 function buildReportMessage() {
   const name = document.querySelector("#reportName").value.trim() || "Nao informado";
   const contact = document.querySelector("#reportContact").value.trim() || "Nao informado";
+  const city = document.querySelector("#reportCity").value;
   const place = document.querySelector("#reportPlace").value.trim();
   const type = document.querySelector("#reportType").value;
   const message = document.querySelector("#reportMessage").value.trim();
@@ -375,6 +446,7 @@ function buildReportMessage() {
     "Canal de denuncia - App Jornal Opiniao",
     "",
     `Tipo: ${type}`,
+    `Cidade: ${city}`,
     `Local: ${place}`,
     `Preservar identidade: ${anonymous}`,
     `Nome: ${name}`,
@@ -413,6 +485,9 @@ function bindEvents() {
   });
   els.appViewTriggers.forEach((trigger) => {
     trigger.addEventListener("click", () => setView(trigger.dataset.view));
+  });
+  els.cityChips.forEach((chip) => {
+    chip.addEventListener("click", () => setCity(chip.dataset.city));
   });
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;
