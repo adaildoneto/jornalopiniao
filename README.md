@@ -4,6 +4,8 @@ App web/PWA para leitura das noticias do site `jornalopiniao.net` dentro do app 
 
 O feed carrega materias sob demanda pela API do WordPress. Quando uma cidade ou editoria ainda nao tem chamadas suficientes para preencher a capa, o app busca paginas adicionais automaticamente e tambem oferece o botao "Carregar mais materias".
 
+O app tambem possui uma area de Stories mobile first para navegar pelas materias em tela cheia, curtir localmente e compartilhar pelo recurso nativo do aparelho quando disponivel.
+
 ## Como usar
 
 Abra `index.html` no navegador ou sirva a pasta localmente:

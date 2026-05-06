@@ -28,6 +28,7 @@
 
         <nav class="app-nav" aria-label="Areas do app">
           <button class="app-tab active" type="button" data-view="capa">Capa</button>
+          <button class="app-tab" type="button" data-view="stories">Stories</button>
           <button class="app-tab" type="button" data-view="leitura">Leitura</button>
           <button class="app-tab" type="button" data-view="denuncia">Den&uacute;ncia</button>
         </nav>
@@ -45,6 +46,7 @@
                 <p id="heroExcerpt">Carregando a edi&ccedil;&atilde;o mais recente...</p>
                 <div class="hero-actions">
                   <button class="primary-action" id="heroReadButton" type="button">Ler no app</button>
+                  <button class="secondary-action app-view-trigger" type="button" data-view="stories">Ver stories</button>
                   <button class="secondary-action app-view-trigger" type="button" data-view="denuncia">Enviar den&uacute;ncia</button>
                 </div>
               </div>
@@ -92,6 +94,39 @@
               <button class="load-more-button" id="coverLoadMoreButton" type="button">Carregar mais mat&eacute;rias</button>
             </div>
           </section>
+        </section>
+
+        <section class="app-view" id="view-stories" data-view-panel="stories" aria-labelledby="storiesTitle">
+          <div class="stories-shell">
+            <div class="story-card" id="storyCard">
+              <div class="story-bg" id="storyBg"></div>
+              <div class="story-shade"></div>
+              <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
+
+              <div class="story-topbar">
+                <div>
+                  <p class="kicker">Stories</p>
+                  <h2 id="storiesTitle">Jornal Opini&atilde;o</h2>
+                </div>
+                <button class="story-icon-button app-view-trigger" type="button" data-view="capa" aria-label="Fechar stories">x</button>
+              </div>
+
+              <button class="story-zone story-prev-zone" id="storyPrevZone" type="button" aria-label="Story anterior"></button>
+              <button class="story-zone story-next-zone" id="storyNextZone" type="button" aria-label="Proximo story"></button>
+
+              <article class="story-content">
+                <p class="story-meta" id="storyMeta">Carregando</p>
+                <h3 id="storyTitle">Carregando mat&eacute;rias...</h3>
+                <p id="storyExcerpt">As principais not&iacute;cias em formato r&aacute;pido.</p>
+                <div class="story-actions">
+                  <button class="story-action-button" id="storyLikeButton" type="button" aria-pressed="false">Curtir</button>
+                  <button class="story-action-button" id="storyShareButton" type="button">Compartilhar</button>
+                  <button class="story-action-button" id="storyReadButton" type="button">Ler</button>
+                </div>
+                <p class="story-feedback" id="storyFeedback" role="status" aria-live="polite"></p>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section class="app-view" id="view-leitura" data-view-panel="leitura" aria-labelledby="readingTitle">

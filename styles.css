@@ -9,6 +9,7 @@
   --surface: #eef3f7;
   --radius: 8px;
   --header-height: 156px;
+  --bottom-nav-height: 0px;
   --shadow: 0 18px 44px rgba(10, 69, 121, 0.14);
 }
 
@@ -107,7 +108,7 @@ button {
 
 .app-nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding: 0 16px 12px;
 }
@@ -375,6 +376,168 @@ button {
   gap: 16px;
   height: calc(100% - 414px);
   min-height: 170px;
+}
+
+.stories-shell {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.story-card {
+  position: relative;
+  width: min(100%, 440px);
+  height: 100%;
+  min-height: 560px;
+  overflow: hidden;
+  color: #fff;
+  background: #111827;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.story-bg,
+.story-shade {
+  position: absolute;
+  inset: 0;
+}
+
+.story-bg {
+  background-position: center;
+  background-size: cover;
+  transform: scale(1.02);
+  transition: background-image 180ms ease, transform 220ms ease;
+}
+
+.story-shade {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.18) 36%, rgba(0, 0, 0, 0.88)),
+    linear-gradient(90deg, rgba(10, 69, 121, 0.32), transparent 50%, rgba(0, 0, 0, 0.2));
+}
+
+.story-progress {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  z-index: 2;
+}
+
+.story-progress-item {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.story-progress-item.seen,
+.story-progress-item.active {
+  background: #fff;
+}
+
+.story-topbar {
+  position: absolute;
+  z-index: 3;
+  top: 28px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.story-topbar h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.story-icon-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.22);
+  font-weight: 800;
+}
+
+.story-zone {
+  position: absolute;
+  z-index: 2;
+  top: 88px;
+  bottom: 156px;
+  border: 0;
+  background: transparent;
+}
+
+.story-prev-zone {
+  left: 0;
+  width: 34%;
+}
+
+.story-next-zone {
+  right: 0;
+  width: 66%;
+}
+
+.story-content {
+  position: absolute;
+  z-index: 3;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.story-meta,
+.story-feedback {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.story-content h3 {
+  margin: 0;
+  font-family: Lato, "Segoe UI", Arial, sans-serif;
+  font-size: clamp(28px, 9vw, 46px);
+  line-height: 0.98;
+  letter-spacing: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.48);
+}
+
+.story-content p:not(.story-meta):not(.story-feedback) {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.story-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.story-action-button {
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: var(--radius);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.13);
+  font-weight: 800;
+}
+
+.story-action-button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .cover-leads {
@@ -839,11 +1002,29 @@ button {
 
 @media (max-width: 660px) {
   :root {
-    --header-height: 145px;
+    --header-height: 92px;
+    --bottom-nav-height: 66px;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .site-header {
+    position: sticky;
+  }
+
+  .topbar {
+    display: none;
+  }
+
+  .brand-row {
+    padding: 10px 12px;
   }
 
   .main {
-    padding: 10px;
+    min-height: calc(100svh - var(--header-height) - var(--bottom-nav-height));
+    padding: 10px 10px calc(var(--bottom-nav-height) + 10px);
   }
 
   .brand img {
@@ -851,16 +1032,28 @@ button {
   }
 
   .app-nav {
-    gap: 4px;
+    position: fixed;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: none;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: var(--primary);
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.18);
   }
 
   .app-tab {
-    min-height: 38px;
-    font-size: 13px;
+    min-height: 44px;
+    border-color: transparent;
+    border-radius: 7px;
+    font-size: 12px;
   }
 
   .hero-news {
-    min-height: 390px;
+    min-height: 360px;
   }
 
   .hero-copy {
@@ -900,5 +1093,16 @@ button {
   .reader-panel,
   .report-section {
     padding: 18px;
+  }
+
+  .stories-shell {
+    height: calc(100svh - var(--header-height) - var(--bottom-nav-height) - 20px);
+  }
+
+  .story-card {
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    border-radius: 0;
   }
 }

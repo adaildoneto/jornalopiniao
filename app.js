@@ -6,6 +6,7 @@ const DEFAULT_IMAGE = "https://i0.wp.com/jornalopiniao.net/wp-content/uploads/20
 const POSTS_PER_PAGE = 20;
 const MIN_COVER_POSTS = 12;
 const MIN_READING_POSTS = 16;
+const LIKE_STORAGE_KEY = "jornalopiniao-liked-posts";
 const CITY_FILTERS = {
   todas: {
     label: "Todas as cidades",
@@ -49,7 +50,9 @@ const state = {
   page: 0,
   totalPages: 1,
   hasMore: true,
-  isLoadingMore: false
+  isLoadingMore: false,
+  storyIndex: 0,
+  likedPosts: new Set(JSON.parse(localStorage.getItem(LIKE_STORAGE_KEY) || "[]"))
 };
 
 const els = {
@@ -64,6 +67,17 @@ const els = {
   heroTitle: document.querySelector("#heroTitle"),
   heroExcerpt: document.querySelector("#heroExcerpt"),
   heroReadButton: document.querySelector("#heroReadButton"),
+  storyBg: document.querySelector("#storyBg"),
+  storyProgress: document.querySelector("#storyProgress"),
+  storyPrevZone: document.querySelector("#storyPrevZone"),
+  storyNextZone: document.querySelector("#storyNextZone"),
+  storyMeta: document.querySelector("#storyMeta"),
+  storyTitle: document.querySelector("#storyTitle"),
+  storyExcerpt: document.querySelector("#storyExcerpt"),
+  storyLikeButton: document.querySelector("#storyLikeButton"),
+  storyShareButton: document.querySelector("#storyShareButton"),
+  storyReadButton: document.querySelector("#storyReadButton"),
+  storyFeedback: document.querySelector("#storyFeedback"),
   coverLeadGrid: document.querySelector("#coverLeadGrid"),
   coverLatestGrid: document.querySelector("#coverLatestGrid"),
   coverLoadMoreButton: document.querySelector("#coverLoadMoreButton"),
@@ -218,6 +232,10 @@ function setView(view) {
   els.appTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === view);
   });
+  if (view === "stories") {
+    renderStory();
+    ensureMinimumPosts();
+  }
 }
 
 async function fetchJson(url) {
@@ -307,6 +325,7 @@ async function loadMorePosts() {
     applyFilters();
     renderHero(state.filteredPosts[0] || state.posts[0]);
     renderCover();
+    renderStory();
     updateLoadMoreButtons();
   }
 }
@@ -338,6 +357,7 @@ function applyFilters() {
   });
   renderList();
   updateStatusCount();
+  renderStory();
 }
 
 function renderHero(post) {
@@ -417,6 +437,116 @@ function renderCover() {
     item.append(button);
     els.popularList.append(item);
   });
+}
+
+function getStoryPosts() {
+  return state.filteredPosts.length ? state.filteredPosts : state.posts;
+}
+
+function getCurrentStory() {
+  const posts = getStoryPosts();
+  if (!posts.length) return null;
+  state.storyIndex = Math.min(Math.max(state.storyIndex, 0), posts.length - 1);
+  return posts[state.storyIndex];
+}
+
+function persistLikes() {
+  localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify([...state.likedPosts]));
+}
+
+function renderStory() {
+  const posts = getStoryPosts();
+  const post = getCurrentStory();
+
+  if (!post) {
+    els.storyTitle.textContent = "Nenhuma materia disponivel";
+    els.storyExcerpt.textContent = "Atualize o feed para carregar os stories.";
+    els.storyMeta.textContent = "Stories";
+    els.storyBg.style.backgroundImage = `url("${DEFAULT_IMAGE}")`;
+    els.storyProgress.innerHTML = "";
+    return;
+  }
+
+  const postId = String(post.id);
+  const liked = state.likedPosts.has(postId);
+  const progress = posts.slice(0, Math.min(posts.length, 12)).map((_, index) => {
+    const active = index === state.storyIndex ? " active" : "";
+    const seen = index < state.storyIndex ? " seen" : "";
+    return `<span class="story-progress-item${active}${seen}"></span>`;
+  }).join("");
+
+  els.storyBg.style.backgroundImage = `url("${getImage(post)}")`;
+  els.storyMeta.textContent = `${getCategoryName(post)} | ${formatDate(post.date)} | ${state.storyIndex + 1} de ${posts.length}`;
+  els.storyTitle.textContent = stripHtml(post.title?.rendered);
+  els.storyExcerpt.textContent = stripHtml(post.excerpt?.rendered) || "Toque em Ler para abrir a materia completa.";
+  els.storyLikeButton.textContent = liked ? "Curtido" : "Curtir";
+  els.storyLikeButton.setAttribute("aria-pressed", String(liked));
+  els.storyFeedback.textContent = "";
+  els.storyProgress.innerHTML = progress;
+}
+
+async function nextStory() {
+  const posts = getStoryPosts();
+  if (!posts.length) return;
+
+  if (state.storyIndex < posts.length - 1) {
+    state.storyIndex += 1;
+    renderStory();
+    return;
+  }
+
+  if (state.hasMore) {
+    await loadMorePosts();
+    state.storyIndex = Math.min(state.storyIndex + 1, getStoryPosts().length - 1);
+    renderStory();
+  }
+}
+
+function previousStory() {
+  if (state.storyIndex > 0) {
+    state.storyIndex -= 1;
+    renderStory();
+  }
+}
+
+function toggleStoryLike() {
+  const post = getCurrentStory();
+  if (!post) return;
+
+  const postId = String(post.id);
+  if (state.likedPosts.has(postId)) {
+    state.likedPosts.delete(postId);
+  } else {
+    state.likedPosts.add(postId);
+  }
+
+  persistLikes();
+  renderStory();
+}
+
+async function shareStory() {
+  const post = getCurrentStory();
+  if (!post) return;
+
+  const title = stripHtml(post.title?.rendered);
+  const url = post.link || SITE_URL;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text: "Veja esta materia do Jornal Opiniao", url });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    els.storyFeedback.textContent = "Link copiado para compartilhar.";
+  } catch {
+    els.storyFeedback.textContent = "Nao foi possivel compartilhar agora.";
+  }
+}
+
+function readCurrentStory() {
+  const post = getCurrentStory();
+  if (post) selectPost(post.id);
 }
 
 function renderList() {
@@ -566,6 +696,11 @@ function bindEvents() {
   });
   els.coverLoadMoreButton.addEventListener("click", loadMorePosts);
   els.feedLoadMoreButton.addEventListener("click", loadMorePosts);
+  els.storyPrevZone.addEventListener("click", previousStory);
+  els.storyNextZone.addEventListener("click", nextStory);
+  els.storyLikeButton.addEventListener("click", toggleStoryLike);
+  els.storyShareButton.addEventListener("click", shareStory);
+  els.storyReadButton.addEventListener("click", readCurrentStory);
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;
     if (id) selectPost(id);
