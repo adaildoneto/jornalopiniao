@@ -461,6 +461,29 @@ button {
   background: #fff;
 }
 
+.load-more-button {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--primary);
+  background: #fff;
+  font-weight: 800;
+}
+
+.load-more-button:hover {
+  background: #f7fafc;
+}
+
+.load-more-button:disabled {
+  color: var(--muted);
+  cursor: wait;
+}
+
+.load-more-button[hidden] {
+  display: none;
+}
+
 .headline-link span,
 .news-meta {
   color: var(--primary);

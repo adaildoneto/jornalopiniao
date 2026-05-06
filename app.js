@@ -3,6 +3,9 @@ const SITE_URL = "https://jornalopiniao.net";
 const NEWSROOM_EMAIL = "redacao@jornalopiniao.net";
 const WHATSAPP_NUMBER = "";
 const DEFAULT_IMAGE = "https://i0.wp.com/jornalopiniao.net/wp-content/uploads/2019/02/14708185_1085435801551868_8420624485574874253_n.png?fit=900%2C900&ssl=1";
+const POSTS_PER_PAGE = 20;
+const MIN_COVER_POSTS = 12;
+const MIN_READING_POSTS = 16;
 const CITY_FILTERS = {
   todas: {
     label: "Todas as cidades",
@@ -42,7 +45,11 @@ const state = {
   selectedId: null,
   activeCategoryId: "",
   activeCity: "todas",
-  searchTerm: ""
+  searchTerm: "",
+  page: 0,
+  totalPages: 1,
+  hasMore: true,
+  isLoadingMore: false
 };
 
 const els = {
@@ -59,8 +66,10 @@ const els = {
   heroReadButton: document.querySelector("#heroReadButton"),
   coverLeadGrid: document.querySelector("#coverLeadGrid"),
   coverLatestGrid: document.querySelector("#coverLatestGrid"),
+  coverLoadMoreButton: document.querySelector("#coverLoadMoreButton"),
   popularList: document.querySelector("#popularList"),
   newsList: document.querySelector("#newsList"),
+  feedLoadMoreButton: document.querySelector("#feedLoadMoreButton"),
   statusLine: document.querySelector("#statusLine"),
   searchInput: document.querySelector("#searchInput"),
   navChips: document.querySelectorAll(".nav-chip"),
@@ -186,10 +195,11 @@ function setStatus(message) {
 
 function updateStatusCount() {
   const cityLabel = CITY_FILTERS[state.activeCity]?.label || "Todas as cidades";
-  setStatus(`${state.filteredPosts.length} noticias exibidas | ${cityLabel}`);
+  const suffix = state.hasMore ? "mais materias disponiveis" : "fim do feed";
+  setStatus(`${state.filteredPosts.length} noticias exibidas | ${cityLabel} | ${suffix}`);
 }
 
-function setCity(city) {
+async function setCity(city) {
   state.activeCity = CITY_FILTERS[city] ? city : "todas";
   els.cityChips.forEach((chip) => {
     chip.classList.toggle("active", chip.dataset.city === state.activeCity);
@@ -198,6 +208,7 @@ function setCity(city) {
   updateStatusCount();
   renderHero(state.filteredPosts[0] || state.posts[0]);
   renderCover();
+  await ensureMinimumPosts();
 }
 
 function setView(view) {
@@ -214,6 +225,18 @@ async function fetchJson(url) {
   if (!response.ok) {
     throw new Error(`Falha ${response.status}`);
   }
+  return response.json();
+}
+
+async function fetchPostsPage(page) {
+  const categoryParam = state.activeCategoryId ? `&categories=${state.activeCategoryId}` : "";
+  const response = await fetch(`${WP_BASE}/posts?per_page=${POSTS_PER_PAGE}&page=${page}&_embed=1${categoryParam}`);
+
+  if (!response.ok) {
+    throw new Error(`Falha ${response.status}`);
+  }
+
+  state.totalPages = Number(response.headers.get("X-WP-TotalPages")) || page;
   return response.json();
 }
 
@@ -240,20 +263,70 @@ async function loadCategories() {
 
 async function loadPosts() {
   setStatus("Conectando ao WordPress...");
+  state.posts = [];
+  state.filteredPosts = [];
+  state.page = 0;
+  state.totalPages = 1;
+  state.hasMore = true;
   try {
-    const categoryParam = state.activeCategoryId ? `&categories=${state.activeCategoryId}` : "";
-    const posts = await fetchJson(`${WP_BASE}/posts?per_page=50&_embed=1${categoryParam}`);
-    state.posts = posts.length ? posts : fallbackPosts;
-    const cityLabel = CITY_FILTERS[state.activeCity]?.label || "Todas as cidades";
-    setStatus(`${state.posts.length} noticias carregadas de jornalopiniao.net | ${cityLabel}`);
+    await loadMorePosts();
+    await ensureMinimumPosts();
   } catch (error) {
     console.warn("Feed indisponivel", error);
     state.posts = fallbackPosts;
+    state.hasMore = false;
     setStatus("Feed temporariamente indisponivel. Mostrando acesso direto ao site.");
   }
   applyFilters();
   renderHero(state.filteredPosts[0] || state.posts[0]);
   renderCover();
+}
+
+async function loadMorePosts() {
+  if (state.isLoadingMore || !state.hasMore) return;
+
+  state.isLoadingMore = true;
+  updateLoadMoreButtons();
+
+  try {
+    const nextPage = state.page + 1;
+    const posts = await fetchPostsPage(nextPage);
+    const knownIds = new Set(state.posts.map((post) => String(post.id)));
+    const freshPosts = posts.filter((post) => !knownIds.has(String(post.id)));
+
+    state.posts = [...state.posts, ...freshPosts];
+    state.page = nextPage;
+    state.hasMore = state.page < state.totalPages && posts.length > 0;
+
+    if (!state.posts.length) {
+      state.posts = fallbackPosts;
+      state.hasMore = false;
+    }
+  } finally {
+    state.isLoadingMore = false;
+    applyFilters();
+    renderHero(state.filteredPosts[0] || state.posts[0]);
+    renderCover();
+    updateLoadMoreButtons();
+  }
+}
+
+async function ensureMinimumPosts() {
+  const targetCount = Math.max(MIN_COVER_POSTS, MIN_READING_POSTS);
+  let attempts = 0;
+  while (state.filteredPosts.length < targetCount && state.hasMore && attempts < 8) {
+    attempts += 1;
+    await loadMorePosts();
+  }
+}
+
+function updateLoadMoreButtons() {
+  [els.coverLoadMoreButton, els.feedLoadMoreButton].forEach((button) => {
+    if (!button) return;
+    button.hidden = !state.hasMore && !state.isLoadingMore;
+    button.disabled = state.isLoadingMore;
+    button.textContent = state.isLoadingMore ? "Carregando materias..." : "Carregar mais materias";
+  });
 }
 
 function applyFilters() {
@@ -392,6 +465,8 @@ function renderList() {
     button.addEventListener("click", () => selectPost(post.id));
     els.newsList.append(button);
   });
+
+  updateLoadMoreButtons();
 }
 
 function selectPost(id) {
@@ -489,6 +564,8 @@ function bindEvents() {
   els.cityChips.forEach((chip) => {
     chip.addEventListener("click", () => setCity(chip.dataset.city));
   });
+  els.coverLoadMoreButton.addEventListener("click", loadMorePosts);
+  els.feedLoadMoreButton.addEventListener("click", loadMorePosts);
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;
     if (id) selectPost(id);
@@ -496,6 +573,7 @@ function bindEvents() {
   els.searchInput.addEventListener("input", (event) => {
     state.searchTerm = event.target.value.trim();
     applyFilters();
+    ensureMinimumPosts();
   });
   els.navChips.forEach((chip) => {
     chip.addEventListener("click", () => {

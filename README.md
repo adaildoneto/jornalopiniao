@@ -2,6 +2,8 @@
 
 App web/PWA para leitura das noticias do site `jornalopiniao.net` dentro do app e envio de denuncias do leitor para a redacao. A capa e a leitura destacam duas pracas principais: Rio Branco, capital do Acre, e Boca do Acre, no Amazonas.
 
+O feed carrega materias sob demanda pela API do WordPress. Quando uma cidade ou editoria ainda nao tem chamadas suficientes para preencher a capa, o app busca paginas adicionais automaticamente e tambem oferece o botao "Carregar mais materias".
+
 ## Como usar
 
 Abra `index.html` no navegador ou sirva a pasta localmente:
