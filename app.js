@@ -158,44 +158,6 @@ function sanitizeArticleHtml(value = "") {
   return template.innerHTML;
 }
 
-function createReaderSlides(value = "") {
-  const template = document.createElement("template");
-  template.innerHTML = sanitizeArticleHtml(value);
-  const blocks = [...template.content.children].filter((node) => stripHtml(node.outerHTML).length || node.querySelector?.("img"));
-  const usableBlocks = blocks.length ? blocks : [document.createElement("p")];
-
-  if (!blocks.length) {
-    usableBlocks[0].textContent = "A materia completa ainda nao esta disponivel no app.";
-  }
-
-  const slides = [];
-  let current = [];
-  let currentLength = 0;
-
-  usableBlocks.forEach((block) => {
-    const blockLength = stripHtml(block.outerHTML).length;
-    const shouldBreak = current.length && currentLength + blockLength > 760;
-
-    if (shouldBreak) {
-      slides.push(current.join(""));
-      current = [];
-      currentLength = 0;
-    }
-
-    current.push(block.outerHTML);
-    currentLength += blockLength;
-  });
-
-  if (current.length) slides.push(current.join(""));
-
-  return slides.map((slide, index) => `
-    <section class="reader-slide">
-      <div class="reader-slide-counter">${index + 1} / ${slides.length}</div>
-      ${slide}
-    </section>
-  `).join("");
-}
-
 function applyImageFallback(img) {
   img.addEventListener("error", () => {
     if (img.src !== DEFAULT_IMAGE) {
@@ -647,7 +609,7 @@ async function shareStory(postId, feedbackElement) {
 
 function readCurrentStory(postId) {
   const post = findPostById(postId);
-  if (post) selectPost(post.id, { slideMode: true });
+  if (post) selectPost(post.id);
 }
 
 function renderList() {
@@ -700,32 +662,7 @@ function renderList() {
   updateLoadMoreButtons();
 }
 
-function destroyReaderSlider() {
-  if (window.jQuery?.(els.readerBody).hasClass("slick-initialized")) {
-    window.jQuery(els.readerBody).slick("unslick");
-  }
-  els.readerBody.classList.remove("reader-body-slider");
-}
-
-function syncReaderSlider() {
-  if (!window.jQuery || !window.jQuery.fn?.slick) return;
-
-  const $reader = window.jQuery(els.readerBody);
-  if ($reader.hasClass("slick-initialized")) return;
-
-  $reader.slick({
-    adaptiveHeight: true,
-    arrows: false,
-    dots: true,
-    infinite: false,
-    mobileFirst: true,
-    speed: 220,
-    swipe: true,
-    touchThreshold: 12
-  });
-}
-
-function selectPost(id, options = {}) {
+function selectPost(id) {
   const post = state.posts.find((item) => String(item.id) === String(id));
   if (!post) return;
 
@@ -743,17 +680,13 @@ function selectPost(id, options = {}) {
   els.readerMeta.textContent = `${getCategoryName(post)} | ${formatDate(post.date)}`;
   els.readerTitle.textContent = stripHtml(post.title?.rendered);
   els.readerExcerpt.textContent = stripHtml(post.excerpt?.rendered) || "A materia completa esta disponivel no site do Jornal Opiniao.";
-  destroyReaderSlider();
-  els.readerBody.innerHTML = options.slideMode ? createReaderSlides(post.content?.rendered) : sanitizeArticleHtml(post.content?.rendered);
-  els.readerBody.classList.toggle("reader-body-slider", Boolean(options.slideMode));
+  els.readerBody.innerHTML = sanitizeArticleHtml(post.content?.rendered);
   els.readerBody.querySelectorAll("img").forEach(applyImageFallback);
   els.readerLink.href = post.link || SITE_URL;
-  if (options.slideMode) syncReaderSlider();
   els.readerPanel?.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function closeReader() {
-  destroyReaderSlider();
   state.selectedId = null;
   renderList();
   setReadingFocus(false);
