@@ -69,6 +69,9 @@ const els = {
   heroReadButton: document.querySelector("#heroReadButton"),
   storyTrack: document.querySelector("#storyTrack"),
   storyProgress: document.querySelector("#storyProgress"),
+  storyIndicator: document.querySelector("#storyIndicator"),
+  storyPrevButton: document.querySelector("#storyPrevButton"),
+  storyNextButton: document.querySelector("#storyNextButton"),
   coverLeadGrid: document.querySelector("#coverLeadGrid"),
   coverLatestGrid: document.querySelector("#coverLatestGrid"),
   coverLoadMoreButton: document.querySelector("#coverLoadMoreButton"),
@@ -476,6 +479,7 @@ function renderStory() {
 
   if (!visiblePosts.length) {
     els.storyProgress.innerHTML = "";
+    els.storyIndicator.textContent = "0 / 0";
     els.storyTrack.innerHTML = `
       <article class="story-slide">
         <div class="story-bg" style="background-image: url('${DEFAULT_IMAGE}')"></div>
@@ -522,6 +526,7 @@ function renderStory() {
   }).join("");
 
   renderStoryProgress(visiblePosts.length);
+  els.storyIndicator.textContent = `${state.storyIndex + 1} / ${visiblePosts.length}`;
   if (document.querySelector('[data-view-panel="stories"]').classList.contains("active")) {
     syncStorySlider();
   }
@@ -544,7 +549,9 @@ function syncStorySlider() {
   $track.off("afterChange.jornalOpiniao");
   $track.on("afterChange.jornalOpiniao", async (_event, _slick, currentSlide) => {
     state.storyIndex = currentSlide;
-    renderStoryProgress(getStoryPosts().slice(0, 20).length);
+    const total = getStoryPosts().slice(0, 20).length;
+    renderStoryProgress(total);
+    els.storyIndicator.textContent = `${currentSlide + 1} / ${total}`;
 
     if (currentSlide >= getStoryPosts().slice(0, 20).length - 2 && state.hasMore) {
       await loadMorePosts();
@@ -554,13 +561,25 @@ function syncStorySlider() {
   $track.slick({
     arrows: false,
     dots: false,
+    autoplay: true,
+    autoplaySpeed: 5200,
     infinite: false,
     initialSlide: Math.min(state.storyIndex, Math.max(els.storyTrack.children.length - 1, 0)),
     mobileFirst: true,
+    pauseOnFocus: true,
+    pauseOnHover: false,
+    pauseOnDotsHover: false,
     speed: 220,
     swipe: true,
     touchThreshold: 12
   });
+}
+
+function goStory(direction) {
+  const $track = window.jQuery?.(els.storyTrack);
+  if (!$track || !$track.hasClass("slick-initialized")) return;
+  if (direction === "prev") $track.slick("slickPrev");
+  if (direction === "next") $track.slick("slickNext");
 }
 
 function findPostById(id) {
@@ -777,6 +796,13 @@ function bindEvents() {
     if (action.classList.contains("story-like-action")) toggleStoryLike(postId);
     if (action.classList.contains("story-share-action")) shareStory(postId, action.closest(".story-content").querySelector(".story-feedback"));
     if (action.classList.contains("story-read-action")) readCurrentStory(postId);
+  });
+  els.storyPrevButton.addEventListener("click", () => goStory("prev"));
+  els.storyNextButton.addEventListener("click", () => goStory("next"));
+  document.addEventListener("keydown", (event) => {
+    if (!document.querySelector('[data-view-panel="stories"]').classList.contains("active")) return;
+    if (event.key === "ArrowLeft") goStory("prev");
+    if (event.key === "ArrowRight") goStory("next");
   });
   els.heroReadButton.addEventListener("click", () => {
     const id = els.heroReadButton.dataset.id || state.filteredPosts[0]?.id || state.posts[0]?.id;

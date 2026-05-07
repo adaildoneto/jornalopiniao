@@ -103,14 +103,23 @@
               <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
 
               <div class="story-topbar">
-                <div>
-                  <p class="kicker">Stories</p>
-                  <h2 id="storiesTitle">Jornal Opini&atilde;o</h2>
+                <div class="story-source">
+                  <img class="story-source-avatar" src="https://jornalopiniao.net/wp-content/uploads/2019/02/Logo_Oficial_Opiniao_01-1.png" alt="">
+                  <div>
+                    <p class="kicker">Stories</p>
+                    <h2 id="storiesTitle">Jornal Opini&atilde;o</h2>
+                  </div>
                 </div>
-                <button class="story-icon-button app-view-trigger" type="button" data-view="capa" aria-label="Fechar stories">x</button>
+                <div class="story-top-actions">
+                  <span class="story-indicator" id="storyIndicator">1 / 1</span>
+                  <button class="story-icon-button app-view-trigger" type="button" data-view="capa" aria-label="Fechar stories">x</button>
+                </div>
               </div>
 
+              <button class="story-nav story-nav-prev" id="storyPrevButton" type="button" aria-label="Story anterior">&#8249;</button>
+              <button class="story-nav story-nav-next" id="storyNextButton" type="button" aria-label="Proximo story">&#8250;</button>
               <div class="story-track" id="storyTrack" aria-live="polite"></div>
+              <p class="story-swipe-hint">Deslize para navegar</p>
             </div>
           </div>
         </section>
