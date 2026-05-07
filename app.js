@@ -69,6 +69,8 @@ const els = {
   heroReadButton: document.querySelector("#heroReadButton"),
   storyTrack: document.querySelector("#storyTrack"),
   storyProgress: document.querySelector("#storyProgress"),
+  storyCategoryLabel: document.querySelector("#storyCategoryLabel"),
+  storyDateLabel: document.querySelector("#storyDateLabel"),
   storyIndicator: document.querySelector("#storyIndicator"),
   storyPrevButton: document.querySelector("#storyPrevButton"),
   storyNextButton: document.querySelector("#storyNextButton"),
@@ -462,6 +464,24 @@ function getCurrentStory() {
   return posts[state.storyIndex];
 }
 
+function updateStoryHeader(post) {
+  if (!post) {
+    els.storyCategoryLabel.textContent = "Stories";
+    els.storyDateLabel.textContent = "Sem atualizacao";
+    return;
+  }
+
+  const category = getCategoryName(post);
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  }).format(new Date(post.date));
+
+  els.storyCategoryLabel.textContent = category;
+  els.storyDateLabel.textContent = dateLabel;
+}
+
 function persistLikes() {
   localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify([...state.likedPosts]));
 }
@@ -480,12 +500,13 @@ function renderStory() {
   if (!visiblePosts.length) {
     els.storyProgress.innerHTML = "";
     els.storyIndicator.textContent = "0 / 0";
+    updateStoryHeader(null);
     els.storyTrack.innerHTML = `
       <article class="story-slide">
         <div class="story-bg" style="background-image: url('${DEFAULT_IMAGE}')"></div>
         <div class="story-shade"></div>
         <div class="story-content">
-          <p class="story-meta">Stories</p>
+          <p class="story-meta">Sem historias</p>
           <h3>Nenhuma materia disponivel</h3>
           <p class="story-feedback">Atualize o feed para carregar os stories.</p>
         </div>
@@ -498,7 +519,7 @@ function renderStory() {
     const postId = String(post.id);
     const liked = state.likedPosts.has(postId);
     const title = escapeHtml(stripHtml(post.title?.rendered));
-    const meta = escapeHtml(`${getCategoryName(post)} | ${formatDate(post.date)} | ${index + 1} de ${visiblePosts.length}`);
+    const meta = `${index + 1} de ${visiblePosts.length}`;
     const image = escapeHtml(getImage(post).replace(/'/g, "%27"));
 
     return `
@@ -525,6 +546,7 @@ function renderStory() {
     `;
   }).join("");
 
+  updateStoryHeader(visiblePosts[state.storyIndex] || visiblePosts[0]);
   renderStoryProgress(visiblePosts.length);
   els.storyIndicator.textContent = `${state.storyIndex + 1} / ${visiblePosts.length}`;
   if (document.querySelector('[data-view-panel="stories"]').classList.contains("active")) {
@@ -552,6 +574,7 @@ function syncStorySlider() {
     const total = getStoryPosts().slice(0, 20).length;
     renderStoryProgress(total);
     els.storyIndicator.textContent = `${currentSlide + 1} / ${total}`;
+    updateStoryHeader(getStoryPosts()[currentSlide]);
 
     if (currentSlide >= getStoryPosts().slice(0, 20).length - 2 && state.hasMore) {
       await loadMorePosts();

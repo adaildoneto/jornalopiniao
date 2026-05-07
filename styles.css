@@ -490,6 +490,23 @@ button {
   line-height: 1;
 }
 
+.story-hidden-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+}
+
+#storyDateLabel {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 18px;
+  line-height: 1.1;
+}
+
 .story-top-actions {
   display: flex;
   align-items: center;
@@ -518,27 +535,26 @@ button {
   font-weight: 800;
 }
 
+.story-nav-stack {
+  position: absolute;
+  left: 12px;
+  bottom: 128px;
+  z-index: 4;
+  display: grid;
+  gap: 10px;
+}
+
 .story-nav {
   position: absolute;
-  top: 50%;
-  z-index: 4;
+  position: static;
   width: 42px;
   height: 42px;
-  margin-top: -21px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 999px;
   color: #fff;
   background: rgba(2, 6, 23, 0.5);
   font-size: 26px;
   line-height: 1;
-}
-
-.story-nav-prev {
-  left: 12px;
-}
-
-.story-nav-next {
-  right: 12px;
 }
 
 .story-content {
@@ -1227,8 +1243,13 @@ button {
   .story-nav {
     width: 40px;
     height: 40px;
-    margin-top: -20px;
     font-size: 24px;
+  }
+
+  .story-nav-stack {
+    left: 10px;
+    bottom: 118px;
+    gap: 8px;
   }
 
   .reader-article > img {
