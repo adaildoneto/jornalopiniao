@@ -13,7 +13,7 @@
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
-    "jquery": "^4.0.0",
+    "jquery": "^3.7.1",
     "slick-carousel": "^1.8.1"
   }
 }
