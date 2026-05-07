@@ -73,12 +73,15 @@ const els = {
   coverLatestGrid: document.querySelector("#coverLatestGrid"),
   coverLoadMoreButton: document.querySelector("#coverLoadMoreButton"),
   popularList: document.querySelector("#popularList"),
+  readingShell: document.querySelector(".reading-shell"),
+  feedPanel: document.querySelector("#feedPanel"),
   newsList: document.querySelector("#newsList"),
   feedLoadMoreButton: document.querySelector("#feedLoadMoreButton"),
   statusLine: document.querySelector("#statusLine"),
   searchInput: document.querySelector("#searchInput"),
   navChips: document.querySelectorAll(".nav-chip"),
   readerPanel: document.querySelector("#readerPanel"),
+  readerBackButton: document.querySelector("#readerBackButton"),
   readerEmpty: document.querySelector("#readerEmpty"),
   readerArticle: document.querySelector("#readerArticle"),
   readerImage: document.querySelector("#readerImage"),
@@ -275,6 +278,11 @@ function setView(view) {
     syncStorySlider();
     ensureMinimumPosts();
   }
+}
+
+function setReadingFocus(isFocused) {
+  els.readingShell.classList.toggle("reading-focus-mode", isFocused);
+  els.readingShell.classList.toggle("reading-list-mode", !isFocused);
 }
 
 async function fetchJson(url) {
@@ -725,6 +733,7 @@ function selectPost(id, options = {}) {
   renderList();
   renderHero(post);
   setView("leitura");
+  setReadingFocus(true);
 
   els.readerEmpty.classList.add("hidden");
   els.readerArticle.classList.remove("hidden");
@@ -741,6 +750,15 @@ function selectPost(id, options = {}) {
   els.readerLink.href = post.link || SITE_URL;
   if (options.slideMode) syncReaderSlider();
   els.readerPanel?.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeReader() {
+  destroyReaderSlider();
+  state.selectedId = null;
+  renderList();
+  setReadingFocus(false);
+  els.readerArticle.classList.add("hidden");
+  els.readerEmpty.classList.remove("hidden");
 }
 
 function updateClock() {
@@ -817,6 +835,7 @@ function bindEvents() {
   });
   els.coverLoadMoreButton.addEventListener("click", loadMorePosts);
   els.feedLoadMoreButton.addEventListener("click", loadMorePosts);
+  els.readerBackButton.addEventListener("click", closeReader);
   els.storyTrack.addEventListener("click", (event) => {
     const action = event.target.closest(".story-action-button");
     if (!action) return;
@@ -852,6 +871,7 @@ async function init() {
   updateClock();
   setInterval(updateClock, 60000);
   bindEvents();
+  setReadingFocus(false);
   await loadCategories();
   await loadPosts();
 

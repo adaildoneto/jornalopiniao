@@ -668,6 +668,18 @@ button {
   height: 100%;
 }
 
+.reading-shell.reading-focus-mode {
+  grid-template-columns: 1fr;
+}
+
+.reading-shell.reading-focus-mode .feed-panel {
+  display: none;
+}
+
+.reading-shell.reading-list-mode .reader-panel {
+  display: none;
+}
+
 .feed-panel,
 .reader-panel {
   min-height: 0;
@@ -787,6 +799,22 @@ button {
 
 .reader-panel {
   padding: 24px;
+}
+
+.reader-back-button {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--primary);
+  background: #fff;
+  font-weight: 800;
 }
 
 .reader-article {
